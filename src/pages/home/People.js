@@ -17,19 +17,29 @@ function People() {
   const [email, setEmail] = useState();
   const [phone, setPhone] = useState();
   const [show, setShow] = useState(false);
+  const [procurar, setProcurar] = useState("");
+  const [filtro, setFiltro] = useState([]);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   useEffect(() => {
-    db.find({})
-    .sort({ nome: 1 })
-    .exec((err, users) => {
-      if (err) return console.log(err);
-      setPeople(users);
-      console.log(users);
-    });
-
-  },[]); 
+    if (procurar === "") {
+      db.find({})
+      .sort({ nome: 1 })
+      .exec((err, users) => {
+        if (err) return console.log(err);
+        setPeople(users);
+       setFiltro(users);
+       console.log(users)
+      });      
+    }else{
+      setFiltro(
+        people.filter(
+          (item) =>
+            item.nome.toLowerCase().indexOf(procurar.toLocaleLowerCase()) > -1
+        ));
+    }   
+  },[procurar]); 
 
   const handleAddPerson = () => {   
     var usuario = {
@@ -37,12 +47,20 @@ function People() {
       email: email,
       telefone: phone,
     };
-
     db.insert(usuario, function (err) {
-      if (err) return console.log(err); //caso ocorrer algum erro
-      console.log("Novo usuário adicionado!");
-    });   
+      if (err) return console.log(err); //caso ocorrer algum erro    
+      alert("Novo usuário adicionado!")
+    }); 
+    window.location.reload();
   };
+
+  const handleDelete =(id)=>{
+      db.remove({ _id: id }, {}, function (err) {
+      if(err)return console.log(err);
+      alert("Usuário removido com sucesso!!!")
+      window.location.reload();
+    });
+  }
    //Recuperando
     //  db.find({ nome: 'Marco Antonio' }, function (err, usuarios) {
     //   if(err)return console.log(err);
@@ -56,11 +74,7 @@ function People() {
     //  });
 
     //Removendo
-    // db.remove({ _id: "vxJMEAMBFLmkUmKY" }, {}, function (err) {
-    //   if(err)return console.log(err);
-
-    //   console.log("Usuário removido");
-    // });  
+  
 
   
   return (
@@ -130,6 +144,12 @@ function People() {
         </Row>
         <Row>.......</Row>
         <Row>
+        <input
+            type="text"
+            placeholder="Pesquisar nome"
+            value={procurar}
+            onChange={(e) => setProcurar(e.target.value)}
+         />
           <table className="table mt-4">
             <thead>
               <tr>
@@ -140,7 +160,7 @@ function People() {
               </tr>
             </thead>
             <tbody>
-            {people.map((person, index) => {
+            {filtro.map((person, index) => {
                   return (
                     <tr key={index}>
                       <td>
@@ -150,7 +170,7 @@ function People() {
                       </td>
                       <td>{person.email}</td>
                       <td>{person.telefone}</td>
-                      <td>editar | excluir</td>
+                      <td><Button variant="outlined" color="error" onClick={() => handleDelete(person._id)}>Excluir</Button> | <Button variant="outlined" color="error" onClick={() => alert('Em construção!!!')}>Editar</Button></td>
                     </tr>
                   );
                 })}
